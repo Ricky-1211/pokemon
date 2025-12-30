@@ -84,6 +84,24 @@ const BattleRoom = ({ onBackToLobby, playerPokemon: propPlayerPokemon, enemyPoke
     if (!playerPokemonRef.current || !enemyPokemonRef.current) return
 
     const ctx = gsap.context(() => {
+      // Create proxy objects for scale animations
+      const playerScaleProxy = {
+        x: playerPokemonRef.current.scale.x,
+        y: playerPokemonRef.current.scale.y,
+        z: playerPokemonRef.current.scale.z
+      }
+      const enemyScaleProxy = {
+        x: enemyPokemonRef.current.scale.x,
+        y: enemyPokemonRef.current.scale.y,
+        z: enemyPokemonRef.current.scale.z
+      }
+      
+      // Set initial scale values
+      playerScaleProxy.x = playerScaleProxy.y = playerScaleProxy.z = 0.5
+      enemyScaleProxy.x = enemyScaleProxy.y = enemyScaleProxy.z = 0.5
+      playerPokemonRef.current.scale.set(0.5, 0.5, 0.5)
+      enemyPokemonRef.current.scale.set(0.5, 0.5, 0.5)
+      
       const tl = gsap.timeline({ defaults: { ease: 'power3.out' } })
 
       tl.fromTo(
@@ -98,16 +116,50 @@ const BattleRoom = ({ onBackToLobby, playerPokemon: propPlayerPokemon, enemyPoke
           '-=0.3'
         )
         .fromTo(
-          playerPokemonRef.current,
-          { opacity: 0, x: -100, scale: 0.5 },
-          { opacity: 1, x: -3, scale: 1.5, duration: 1.2, ease: 'back.out(1.7)' },
+          playerPokemonRef.current.position,
+          { x: -100 },
+          { x: -3, duration: 1.2, ease: 'back.out(1.7)' },
           '-=0.5'
         )
         .fromTo(
-          enemyPokemonRef.current,
-          { opacity: 0, x: 100, scale: 0.5 },
-          { opacity: 1, x: 3, scale: 1.5, duration: 1.2, ease: 'back.out(1.7)' },
+          playerScaleProxy,
+          { x: 0.5, y: 0.5, z: 0.5 },
+          { 
+            x: 1.5, 
+            y: 1.5, 
+            z: 1.5, 
+            duration: 1.2, 
+            ease: 'back.out(1.7)',
+            onUpdate: () => {
+              if (playerPokemonRef.current) {
+                playerPokemonRef.current.scale.set(playerScaleProxy.x, playerScaleProxy.y, playerScaleProxy.z)
+              }
+            }
+          },
+          '-=1.2'
+        )
+        .fromTo(
+          enemyPokemonRef.current.position,
+          { x: 100 },
+          { x: 3, duration: 1.2, ease: 'back.out(1.7)' },
           '-=0.8'
+        )
+        .fromTo(
+          enemyScaleProxy,
+          { x: 0.5, y: 0.5, z: 0.5 },
+          { 
+            x: 1.5, 
+            y: 1.5, 
+            z: 1.5, 
+            duration: 1.2, 
+            ease: 'back.out(1.7)',
+            onUpdate: () => {
+              if (enemyPokemonRef.current) {
+                enemyPokemonRef.current.scale.set(enemyScaleProxy.x, enemyScaleProxy.y, enemyScaleProxy.z)
+              }
+            }
+          },
+          '-=1.2'
         )
         .call(() => {
           addBattleLog(`${playerPokemon.name.toUpperCase()} vs ${enemyPokemon.name.toUpperCase()}! Battle Start!`)
@@ -304,6 +356,19 @@ const BattleRoom = ({ onBackToLobby, playerPokemon: propPlayerPokemon, enemyPoke
       const attackerRef = attacker === 'player' ? playerPokemonRef : enemyPokemonRef
       const direction = attacker === 'player' ? 1 : -1
       
+      // Check if refs are available
+      if (!target.current || !attackerRef.current) {
+        resolve()
+        return
+      }
+      
+      // Create proxy object for scale animation
+      const scaleProxy = {
+        x: target.current.scale.x,
+        y: target.current.scale.y,
+        z: target.current.scale.z
+      }
+      
       const tl = gsap.timeline({
         onComplete: () => {
           setLastDamage(null)
@@ -318,20 +383,30 @@ const BattleRoom = ({ onBackToLobby, playerPokemon: propPlayerPokemon, enemyPoke
         duration: 0.2,
         ease: 'power2.out'
       })
-      .to(target.current.scale, {
+      .to(scaleProxy, {
         x: 1.2,
         y: 1.2,
         z: 1.2,
         duration: 0.1,
         ease: 'power2.in',
-        onStart: () => playDamageSound()
+        onStart: () => playDamageSound(),
+        onUpdate: () => {
+          if (target.current) {
+            target.current.scale.set(scaleProxy.x, scaleProxy.y, scaleProxy.z)
+          }
+        }
       })
-      .to(target.current.scale, {
+      .to(scaleProxy, {
         x: 1.5,
         y: 1.5,
         z: 1.5,
         duration: 0.1,
-        ease: 'power2.out'
+        ease: 'power2.out',
+        onUpdate: () => {
+          if (target.current) {
+            target.current.scale.set(scaleProxy.x, scaleProxy.y, scaleProxy.z)
+          }
+        }
       })
       .to(attackerRef.current.position, {
         x: attacker === 'player' ? -3 : 3,
@@ -344,13 +419,27 @@ const BattleRoom = ({ onBackToLobby, playerPokemon: propPlayerPokemon, enemyPoke
   const victoryAnimation = (winner) => {
     const winnerRef = winner === 'player' ? playerPokemonRef : enemyPokemonRef
     
+    if (!winnerRef.current) return
+    
+    // Create proxy object for scale animation
+    const scaleProxy = {
+      x: winnerRef.current.scale.x,
+      y: winnerRef.current.scale.y,
+      z: winnerRef.current.scale.z
+    }
+    
     gsap.timeline()
-      .to(winnerRef.current.scale, {
+      .to(scaleProxy, {
         x: 2,
         y: 2,
         z: 2,
         duration: 0.5,
-        ease: 'elastic.out(1, 0.5)'
+        ease: 'elastic.out(1, 0.5)',
+        onUpdate: () => {
+          if (winnerRef.current) {
+            winnerRef.current.scale.set(scaleProxy.x, scaleProxy.y, scaleProxy.z)
+          }
+        }
       })
       .to(winnerRef.current.rotation, {
         y: Math.PI * 2,
@@ -375,8 +464,8 @@ const BattleRoom = ({ onBackToLobby, playerPokemon: propPlayerPokemon, enemyPoke
     if (playerPokemonRef.current && enemyPokemonRef.current) {
       gsap.to(playerPokemonRef.current.position, { x: -3, duration: 0.5 })
       gsap.to(enemyPokemonRef.current.position, { x: 3, duration: 0.5 })
-      gsap.to(playerPokemonRef.current.scale, { x: 1.5, y: 1.5, z: 1.5, duration: 0.5 })
-      gsap.to(enemyPokemonRef.current.scale, { x: 1.5, y: 1.5, z: 1.5, duration: 0.5 })
+      playerPokemonRef.current.scale.set(1.5, 1.5, 1.5)
+      enemyPokemonRef.current.scale.set(1.5, 1.5, 1.5)
     }
     
     addBattleLog('Battle reset!')

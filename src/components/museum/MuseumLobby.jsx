@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, Suspense } from 'react'
 import { Canvas } from '@react-three/fiber'
 import { OrbitControls, Environment, PerspectiveCamera } from '@react-three/drei'
 import { gsap } from 'gsap'
@@ -7,6 +7,7 @@ import SceneManager from '../../three/SceneManager'
 import CameraController from '../../three/CameraController'
 import Pikachu3D from '../three/Pikachu3D'
 import Pokeball3D from '../three/Pokeball3D'
+import Pokemon3D from '../three/Pokemon3D'
 import useSound from '../../hooks/useSound'
 import { useIsMobile } from '../../hooks/use-mobail'
 
@@ -91,6 +92,8 @@ const MuseumLobby = ({ onEnterMuseum, onStartGame, onBattle, onCardClick, onPoke
   const [pikachuPosition, setPikachuPosition] = useState({ x: 0, y: 0, scale: 1 })
   const [scrollProgress, setScrollProgress] = useState(0)
   const previousTypeRef = useRef('normal')
+  const [selectedPokemon, setSelectedPokemon] = useState(null)
+  const modalRef = useRef(null)
 
   useEffect(() => {
     initAudioContext()
@@ -337,6 +340,20 @@ const MuseumLobby = ({ onEnterMuseum, onStartGame, onBattle, onCardClick, onPoke
     return () => ctx.revert()
   }, [pikachuType, playThunderSound, isMobile])
 
+  // Modal animation
+  useEffect(() => {
+    if (selectedPokemon && modalRef.current) {
+      const modal = modalRef.current.querySelector('.modal-content')
+      if (modal) {
+        gsap.fromTo(
+          modal,
+          { scale: 0.5, opacity: 0, rotationY: -180 },
+          { scale: 1, opacity: 1, rotationY: 0, duration: 0.6, ease: 'back.out(2)' }
+        )
+      }
+    }
+  }, [selectedPokemon])
+
   const handleEnter = (e) => {
     e.preventDefault()
     e.stopPropagation()
@@ -535,7 +552,9 @@ const MuseumLobby = ({ onEnterMuseum, onStartGame, onBattle, onCardClick, onPoke
                 parallaxStrength={0.3}
               />
               <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.5} />
-              <Environment preset="sunset" />
+              <Suspense fallback={null}>
+                <Environment preset="sunset" />
+              </Suspense>
             </SceneManager>
           </Canvas>
         </div>
@@ -686,7 +705,9 @@ const MuseumLobby = ({ onEnterMuseum, onStartGame, onBattle, onCardClick, onPoke
                 parallaxStrength={0.2}
               />
               <OrbitControls enableZoom={false} enablePan={false} autoRotate autoRotateSpeed={0.3} />
-              <Environment preset="sunset" />
+              <Suspense fallback={null}>
+                <Environment preset="sunset" />
+              </Suspense>
             </SceneManager>
           </Canvas>
         </div>
@@ -769,6 +790,158 @@ const MuseumLobby = ({ onEnterMuseum, onStartGame, onBattle, onCardClick, onPoke
           </div>
         </div>
       </section>
+
+      {/* Popular Legendary Pokémon */}
+      <section className="relative min-h-screen py-20 px-4 bg-gradient-to-b from-black via-purple-900/20 to-black overflow-hidden">
+        <div className="max-w-7xl mx-auto relative z-10">
+          <h2 className={`${isMobile ? 'text-4xl' : 'text-6xl md:text-8xl'} font-black text-center mb-4 bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 bg-clip-text text-transparent ${isMobile ? 'mb-4' : 'mb-8'} px-4`} style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
+            LEGENDARY POKÉMON
+          </h2>
+          <p className={`text-center text-gray-400 ${isMobile ? 'mb-8 text-base' : 'mb-16 text-xl'} max-w-2xl mx-auto px-4`}>
+            Discover the most powerful and legendary Pokémon from across the regions
+          </p>
+
+          {/* Legendary Pokémon Grid with Images */}
+          <div className={`grid ${isMobile ? 'grid-cols-2 gap-4' : 'grid-cols-3 lg:grid-cols-4 gap-6'} px-4`}>
+            {[
+              { name: 'Mewtwo', id: 150, color: '#8b5cf6', type: 'psychic' },
+              { name: 'Lugia', id: 249, color: '#3b82f6', type: 'psychic' },
+              { name: 'Ho-Oh', id: 250, color: '#ef4444', type: 'fire' },
+              { name: 'Rayquaza', id: 384, color: '#10b981', type: 'dragon' },
+              { name: 'Dialga', id: 483, color: '#6366f1', type: 'steel' },
+              { name: 'Palkia', id: 484, color: '#a855f7', type: 'water' },
+              { name: 'Giratina', id: 487, color: '#1e293b', type: 'ghost' },
+              { name: 'Kyogre', id: 382, color: '#0ea5e9', type: 'water' },
+              { name: 'Groudon', id: 383, color: '#dc2626', type: 'ground' },
+              { name: 'Zacian', id: 888, color: '#3b82f6', type: 'fairy' },
+              { name: 'Zamazenta', id: 889, color: '#ef4444', type: 'fighting' },
+            ].map((pokemon, index) => (
+              <div
+                key={pokemon.name}
+                className="relative group cursor-pointer"
+                onClick={() => {
+                  playClickSound()
+                  setSelectedPokemon(pokemon)
+                }}
+              >
+                <div className="relative h-64 rounded-2xl overflow-hidden backdrop-blur-md bg-gradient-to-br from-black/40 to-black/60 border-2 border-purple-500/30 hover:border-purple-400/60 transition-all duration-300 hover:shadow-2xl hover:shadow-purple-500/30 active:scale-95">
+                  {/* Pokémon Image */}
+                  <div className="relative w-full h-full flex items-center justify-center p-4">
+                    <img
+                      src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemon.id}.png`}
+                      alt={pokemon.name}
+                      className="w-full h-full object-contain drop-shadow-2xl transition-transform duration-300 group-hover:scale-110"
+                      onError={(e) => {
+                        if (e.target.src.includes('official-artwork')) {
+                          e.target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.id}.png`
+                        } else if (e.target.src.includes('sprites/pokemon/') && !e.target.src.includes('dream-world')) {
+                          e.target.src = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/dream-world/${pokemon.id}.svg`
+                        }
+                      }}
+                    />
+                    
+                    {/* Image glow effect */}
+                    <div 
+                      className="absolute inset-0 rounded-full blur-2xl opacity-30 transition-opacity duration-300 group-hover:opacity-50 pointer-events-none"
+                      style={{ backgroundColor: pokemon.color }}
+                    />
+                  </div>
+                  
+                  {/* Pokémon Name Overlay */}
+                  <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/90 via-black/70 to-transparent">
+                    <h3 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-white text-center`}>
+                      {pokemon.name}
+                    </h3>
+                    <p className={`${isMobile ? 'text-xs' : 'text-sm'} text-gray-400 text-center capitalize mt-1`}>
+                      {pokemon.type}
+                    </p>
+                  </div>
+
+                  {/* Glow effect on hover */}
+                  <div 
+                    className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                    style={{
+                      background: `radial-gradient(circle at center, ${pokemon.color}20, transparent 70%)`
+                    }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Modal for 3D Pokémon View */}
+      {selectedPokemon && (
+        <div
+          ref={modalRef}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+          onClick={(e) => {
+            if (e.target === modalRef.current) {
+              playClickSound()
+              setSelectedPokemon(null)
+            }
+          }}
+        >
+          <div 
+            className="modal-content relative w-full max-w-4xl h-[90vh] rounded-3xl overflow-hidden bg-gradient-to-br from-black/90 via-purple-900/30 to-black/90 border-2 border-purple-500/50 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Close Button */}
+            <button
+              onClick={() => {
+                playClickSound()
+                setSelectedPokemon(null)
+              }}
+              className="absolute top-4 right-4 z-20 w-10 h-10 rounded-full bg-black/60 hover:bg-red-500/80 border-2 border-white/30 flex items-center justify-center text-white font-bold text-xl transition-all duration-300 hover:scale-110 active:scale-95"
+            >
+              ×
+            </button>
+
+            {/* 3D Canvas */}
+            <div className="absolute inset-0 z-0">
+              <Canvas gl={{ antialias: true, alpha: true }}>
+                <Suspense fallback={null}>
+                  <PerspectiveCamera makeDefault position={[0, 0, 6]} fov={50} />
+                  <ambientLight intensity={0.6} />
+                  <directionalLight position={[5, 5, 5]} intensity={1.2} />
+                  <pointLight position={[-5, -5, -5]} intensity={0.8} color={selectedPokemon.color} />
+                  <pointLight position={[5, -5, 5]} intensity={0.8} color={selectedPokemon.color} />
+                  <Pokemon3D
+                    name={selectedPokemon.name}
+                    position={[0, 0, 0]}
+                    scale={1.5}
+                    variant="normal"
+                  />
+                  <CameraController
+                    targetPosition={[0, 0, 6]}
+                    targetLookAt={[0, 0, 0]}
+                    enableMouseParallax={true}
+                    parallaxStrength={0.3}
+                  />
+                  <OrbitControls enableZoom={true} enablePan={false} autoRotate autoRotateSpeed={0.5} />
+                </Suspense>
+              </Canvas>
+            </div>
+
+            {/* Pokémon Info Overlay */}
+            <div className="absolute bottom-0 left-0 right-0 z-10 p-6 bg-gradient-to-t from-black/95 via-black/80 to-transparent">
+              <div className="text-center">
+                <h3 className={`${isMobile ? 'text-4xl' : 'text-5xl md:text-6xl'} font-black mb-2 bg-gradient-to-r ${selectedPokemon.color.includes('#8b5cf6') ? 'from-purple-400 to-pink-400' : selectedPokemon.color.includes('#3b82f6') ? 'from-blue-400 to-cyan-400' : selectedPokemon.color.includes('#ef4444') ? 'from-red-400 to-orange-400' : selectedPokemon.color.includes('#10b981') ? 'from-green-400 to-emerald-400' : 'from-amber-400 to-yellow-400'} bg-clip-text text-transparent`} style={{ fontFamily: "'Bebas Neue', sans-serif" }}>
+                  {selectedPokemon.name}
+                </h3>
+                <p className={`${isMobile ? 'text-base' : 'text-xl'} text-gray-300 capitalize mb-2`}>
+                  {selectedPokemon.type} Type
+                </p>
+                <p className={`${isMobile ? 'text-sm' : 'text-base'} text-gray-400`}>
+                  Legendary Pokémon #{selectedPokemon.id}
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {/* Add CSS for floating animation */}
       <style>{`

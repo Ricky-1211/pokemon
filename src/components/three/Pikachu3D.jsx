@@ -80,10 +80,16 @@ const Pikachu3D = ({
     }
 
     // Thunderbolt effect - pulsing glow
-    if (type === 'thunderbolt') {
-      const pulse = Math.sin(timeRef.current * 8) * 0.3 + 0.7
-      if (bodyRef.current?.material) {
-        bodyRef.current.material.emissiveIntensity = config.emissiveIntensity * pulse
+    if (type === 'thunderbolt' && bodyRef.current?.material) {
+      try {
+        const pulse = Math.sin(timeRef.current * 8) * 0.3 + 0.7
+        const material = bodyRef.current.material
+        if (material && material.isMeshStandardMaterial && material.emissiveIntensity !== undefined) {
+          material.emissiveIntensity = config.emissiveIntensity * pulse
+        }
+      } catch (error) {
+        // Silently handle material update errors to prevent crashes
+        console.warn('Material update error:', error)
       }
     }
 
@@ -110,7 +116,7 @@ const Pikachu3D = ({
       {type === 'thunderbolt' && (
         <mesh position={[0, 2, 0]}>
           <boxGeometry args={[0.1, 0.6, 0.1]} />
-          <meshBasicMaterial color="#FFFF00" emissive="#FFFF00" emissiveIntensity={1} />
+          <meshBasicMaterial color="#FFFF00" />
         </mesh>
       )}
 

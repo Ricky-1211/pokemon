@@ -386,14 +386,27 @@ function Pokemon({ name, position, onCaught, behavior = "wander" }) {
 
   const handleCatchAttempt = () => {
     // Visual feedback when pokeball is near
-    gsap.to(ref.current.scale, {
+    if (!ref.current) return
+    
+    const scaleProxy = {
+      x: ref.current.scale.x,
+      y: ref.current.scale.y,
+      z: ref.current.scale.z
+    }
+    
+    gsap.to(scaleProxy, {
       x: 1.2,
       y: 1.2,
       z: 1.2,
       duration: 0.1,
       yoyo: true,
       repeat: 2,
-      ease: "power2.out"
+      ease: "power2.out",
+      onUpdate: () => {
+        if (ref.current) {
+          ref.current.scale.set(scaleProxy.x, scaleProxy.y, scaleProxy.z)
+        }
+      }
     })
   }
 
@@ -402,12 +415,25 @@ function Pokemon({ name, position, onCaught, behavior = "wander" }) {
     
     if (success) {
       // Capture animation
-      gsap.to(ref.current.scale, {
+      if (!ref.current) return false
+      
+      const scaleProxy = {
+        x: ref.current.scale.x,
+        y: ref.current.scale.y,
+        z: ref.current.scale.z
+      }
+      
+      gsap.to(scaleProxy, {
         x: 0.1,
         y: 0.1,
         z: 0.1,
         duration: 0.5,
         ease: "back.in(2)",
+        onUpdate: () => {
+          if (ref.current) {
+            ref.current.scale.set(scaleProxy.x, scaleProxy.y, scaleProxy.z)
+          }
+        },
         onComplete: () => {
           onCaught(name)
         }
@@ -565,12 +591,25 @@ function Pokeball({ position, velocity, onCatch, catchingPokemon, pokemonPositio
                 if (success) {
                   setIsCaught(true)
                   // Success effects
-                  gsap.to(ref.current.scale, {
+                  if (!ref.current) return
+                  
+                  const scaleProxy = {
+                    x: ref.current.scale.x,
+                    y: ref.current.scale.y,
+                    z: ref.current.scale.z
+                  }
+                  
+                  gsap.to(scaleProxy, {
                     x: 1.5,
                     y: 1.5,
                     z: 1.5,
                     duration: 0.5,
-                    ease: "elastic.out(1, 0.5)"
+                    ease: "elastic.out(1, 0.5)",
+                    onUpdate: () => {
+                      if (ref.current) {
+                        ref.current.scale.set(scaleProxy.x, scaleProxy.y, scaleProxy.z)
+                      }
+                    }
                   })
                   
                   // Emit particles on success

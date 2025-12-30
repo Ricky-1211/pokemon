@@ -156,12 +156,24 @@ function PikachuModel({ active = false, compareMode = false }) {
     
     const targetScale = active ? initialScale.current : 0
     
-    gsap.to(groupRef.current.scale, {
+    // Create proxy object for scale animation
+    const scaleProxy = {
+      x: groupRef.current.scale.x,
+      y: groupRef.current.scale.y,
+      z: groupRef.current.scale.z
+    }
+    
+    gsap.to(scaleProxy, {
       x: targetScale,
       y: targetScale,
       z: targetScale,
       duration: 1.5,
       ease: "elastic.out(1, 0.5)",
+      onUpdate: () => {
+        if (groupRef.current) {
+          groupRef.current.scale.set(scaleProxy.x, scaleProxy.y, scaleProxy.z)
+        }
+      },
       onComplete: () => {
         if (active && compareMode) {
           // Add entrance animation for compare mode
@@ -216,14 +228,27 @@ function PikachuModel({ active = false, compareMode = false }) {
       onPointerOut={() => setHovered(false)}
       onPointerDown={() => {
         // Click feedback
-        gsap.to(groupRef.current.scale, {
+        if (!groupRef.current) return
+        
+        const scaleProxy = {
+          x: groupRef.current.scale.x,
+          y: groupRef.current.scale.y,
+          z: groupRef.current.scale.z
+        }
+        
+        gsap.to(scaleProxy, {
           x: initialScale.current * 1.2,
           y: initialScale.current * 1.2,
           z: initialScale.current * 1.2,
           duration: 0.2,
           yoyo: true,
           repeat: 1,
-          ease: "power2.inOut"
+          ease: "power2.inOut",
+          onUpdate: () => {
+            if (groupRef.current) {
+              groupRef.current.scale.set(scaleProxy.x, scaleProxy.y, scaleProxy.z)
+            }
+          }
         })
       }}
     >
@@ -274,12 +299,24 @@ function CharizardModel({ active = false, compareMode = false }) {
     
     const targetScale = active ? initialScale.current : 0
     
-    gsap.to(groupRef.current.scale, {
+    // Create proxy object for scale animation
+    const scaleProxy = {
+      x: groupRef.current.scale.x,
+      y: groupRef.current.scale.y,
+      z: groupRef.current.scale.z
+    }
+    
+    gsap.to(scaleProxy, {
       x: targetScale,
       y: targetScale,
       z: targetScale,
       duration: 1.5,
       ease: "elastic.out(1, 0.5)",
+      onUpdate: () => {
+        if (groupRef.current) {
+          groupRef.current.scale.set(scaleProxy.x, scaleProxy.y, scaleProxy.z)
+        }
+      },
       onComplete: () => {
         if (active && compareMode) {
           gsap.fromTo(groupRef.current.position,
@@ -390,12 +427,24 @@ function MewtwoModel({ active = false, compareMode = false }) {
     
     const targetScale = active ? initialScale.current : 0
     
-    gsap.to(groupRef.current.scale, {
+    // Create proxy object for scale animation
+    const scaleProxy = {
+      x: groupRef.current.scale.x,
+      y: groupRef.current.scale.y,
+      z: groupRef.current.scale.z
+    }
+    
+    gsap.to(scaleProxy, {
       x: targetScale,
       y: targetScale,
       z: targetScale,
       duration: 1.8,
       ease: "elastic.out(1, 0.3)",
+      onUpdate: () => {
+        if (groupRef.current) {
+          groupRef.current.scale.set(scaleProxy.x, scaleProxy.y, scaleProxy.z)
+        }
+      },
       onComplete: () => {
         if (active && compareMode) {
           gsap.fromTo(groupRef.current.position,
